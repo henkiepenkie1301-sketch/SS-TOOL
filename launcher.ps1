@@ -38,7 +38,7 @@ $subTitle.Size = New-Object System.Drawing.Size(150, 20)
 $subTitle.TextAlign = [System.Drawing.ContentAlignment]::TopRight
 $form.Controls.Add($subTitle)
 
-# --- PIN LABEL ---
+# --- PIN INPUT ---
 $pinText = New-Object System.Windows.Forms.Label
 $pinText.Text = "PIN"
 $pinText.Font = New-Object System.Drawing.Font("Segoe UI", 12)
@@ -48,7 +48,6 @@ $pinText.Size = New-Object System.Drawing.Size(650, 30)
 $pinText.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 $form.Controls.Add($pinText)
 
-# --- INPUT VELD ---
 $inputBox = New-Object System.Windows.Forms.TextBox
 $inputBox.Size = New-Object System.Drawing.Size(200, 30)
 $inputBox.Location = New-Object System.Drawing.Point(225, 215)
@@ -96,7 +95,7 @@ $close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- DOWNLOAD LOGICA (EXTRA ROBUUST) ---
+# --- DE NIEUWE LOGICA ---
 $btn.Add_Click({
     $p = $inputBox.Text.Trim()
     if ($p.Length -lt 1) { return }
@@ -104,16 +103,22 @@ $btn.Add_Click({
     
     try {
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
-        $response = Invoke-WebRequest -Uri $u -UseBasicParsing
-        $cleanUrl = $response.Content.Replace('"', '').Trim()
+        $link = (Invoke-WebRequest -Uri $u -UseBasicParsing).Content.Replace('"', '').Trim()
 
-        if ($cleanUrl -ne "null" -and $cleanUrl -like "http*") {
-            $status.Text = "STARTING DOWNLOAD..."
+        if ($link -ne "null" -and $link -like "http*") {
+            $status.Text = "DOWNLOADING..."
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
             
-            # Methode: Open direct via de Shell
-            [void][System.Diagnostics.Process]::Start($cleanUrl)
+            # Bepaal bestandsnaam (bijv. tool.exe of tool.zip)
+            $fileName = $link.Split('/')[-1]
+            if ($fileName -notlike "*.*") { $fileName = "download.exe" }
+            $path = "$env:USERPROFILE\Downloads\$fileName"
             
+            # Download het bestand direct zonder browser
+            Invoke-WebRequest -Uri $link -OutFile $path
+            
+            $status.Text = "OPENING..."
+            Start-Process $path
             Start-Sleep -Seconds 2
             $form.Close()
         } else {
@@ -121,7 +126,8 @@ $btn.Add_Click({
             $status.ForeColor = [System.Drawing.Color]::Red
         }
     } catch {
-        $status.Text = "CONNECTION ERROR"
+        $status.Text = "DOWNLOAD FAILED"
+        $status.ForeColor = [System.Drawing.Color]::Orange
     }
 })
 
