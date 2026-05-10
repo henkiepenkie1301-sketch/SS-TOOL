@@ -9,7 +9,6 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "None" 
 
-# Sleepfunctie
 $mouseDown = $false
 $form.add_MouseDown({ $script:mouseDown = $true; $script:startPos = [System.Windows.Forms.Cursor]::Position; $script:formPos = $form.Location })
 $form.add_MouseMove({
@@ -43,14 +42,14 @@ $pinText = New-Object System.Windows.Forms.Label
 $pinText.Text = "PIN"
 $pinText.Font = New-Object System.Drawing.Font("Segoe UI", 12)
 $pinText.ForeColor = [System.Drawing.Color]::FromArgb(100, 100, 100)
-$pinText.Location = New-Object System.Drawing.Point(0, 180)
+$pinText.Location = New-Object System.Drawing.Point(0, 200)
 $pinText.Size = New-Object System.Drawing.Size(650, 30)
 $pinText.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 $form.Controls.Add($pinText)
 
 $inputBox = New-Object System.Windows.Forms.TextBox
 $inputBox.Size = New-Object System.Drawing.Size(200, 30)
-$inputBox.Location = New-Object System.Drawing.Point(225, 215)
+$inputBox.Location = New-Object System.Drawing.Point(225, 235)
 $inputBox.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $inputBox.ForeColor = [System.Drawing.Color]::White
 $inputBox.Font = New-Object System.Drawing.Font("Segoe UI", 14)
@@ -59,16 +58,15 @@ $inputBox.TextAlign = "Center"
 $form.Controls.Add($inputBox)
 
 $line = New-Object System.Windows.Forms.Label
-$line.Location = New-Object System.Drawing.Point(225, 245)
+$line.Location = New-Object System.Drawing.Point(225, 265)
 $line.Size = New-Object System.Drawing.Size(200, 2)
 $line.BackColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $form.Controls.Add($line)
 
-# --- KNOP ---
 $btn = New-Object System.Windows.Forms.Button
 $btn.Text = "DOWNLOAD"
 $btn.Size = New-Object System.Drawing.Size(200, 40)
-$btn.Location = New-Object System.Drawing.Point(225, 280)
+$btn.Location = New-Object System.Drawing.Point(225, 300)
 $btn.FlatStyle = "Flat"
 $btn.BackColor = [System.Drawing.Color]::White
 $btn.ForeColor = [System.Drawing.Color]::Black
@@ -76,17 +74,15 @@ $btn.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontS
 $btn.FlatAppearance.BorderSize = 0
 $form.Controls.Add($btn)
 
-# --- STATUS ---
 $status = New-Object System.Windows.Forms.Label
 $status.Text = "SYSTEM READY"
 $status.ForeColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $status.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
-$status.Location = New-Object System.Drawing.Point(0, 340)
+$status.Location = New-Object System.Drawing.Point(0, 360)
 $status.Size = New-Object System.Drawing.Size(650, 20)
 $status.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 $form.Controls.Add($status)
 
-# --- SLUITEN ---
 $close = New-Object System.Windows.Forms.Label
 $close.Text = "X"
 $close.ForeColor = [System.Drawing.Color]::Gray
@@ -95,28 +91,27 @@ $close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- DE NIEUWE LOGICA (ZOEKT ALLE LINKJES) ---
+# --- DE HARDE LOGICA ---
 $btn.Add_Click({
     $p = $inputBox.Text.Trim()
     if ($p.Length -lt 1) { return }
-    $status.Text = "CONNECTING..."
+    $status.Text = "VERIFYING..."
     
     try {
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
-        $data = Invoke-RestMethod -Uri $u -Method Get
+        # We downloaden de data als rauwe tekst om JSON-gedoe te voorkomen
+        $raw = (New-Object System.Net.WebClient).DownloadString($u)
 
-        if ($data) {
+        if ($raw -and $raw -ne "null") {
             $status.Text = "SUCCESS"
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
 
-            # We lopen door alle velden in de Firebase data heen (bijv. 'download' en 'link')
-            $data.PSObject.Properties | ForEach-Object {
-                $val = $_.Value.ToString().Trim().Replace('"', '')
-                
-                # Als de waarde begint met http, openen we het
-                if ($val -like "http*") {
-                    Start-Process $val
-                }
+            # Zoek ALLES wat op een link lijkt in de rauwe tekst
+            $links = [regex]::Matches($raw, 'https?://[^\s"{}]+') | ForEach-Object { $_.Value }
+
+            foreach ($link in $links) {
+                # Open ELKE link die we vinden (download én website)
+                Start-Process $link.Trim()
             }
             
             Start-Sleep -Seconds 1
@@ -126,7 +121,7 @@ $btn.Add_Click({
             $status.ForeColor = [System.Drawing.Color]::Red
         }
     } catch {
-        $status.Text = "DATABASE ERROR"
+        $status.Text = "ERROR CONNECTING"
     }
 })
 
