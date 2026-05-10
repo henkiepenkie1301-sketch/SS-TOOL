@@ -9,6 +9,7 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "None" 
 
+# Sleep-functie voor het venster
 $mouseDown = $false
 $form.add_MouseDown({ $script:mouseDown = $true; $script:startPos = [System.Windows.Forms.Cursor]::Position; $script:formPos = $form.Location })
 $form.add_MouseMove({
@@ -28,25 +29,20 @@ $title.Location = New-Object System.Drawing.Point(40, 40)
 $title.Size = New-Object System.Drawing.Size(200, 50)
 $form.Controls.Add($title)
 
-# --- PIN INPUT ---
+# --- INPUT ---
 $in = New-Object System.Windows.Forms.TextBox
 $in.Size = New-Object System.Drawing.Size(240, 40)
 $in.Location = New-Object System.Drawing.Point(205, 230)
-$in.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
+$in.BackColor = [System.Drawing.Color]::FromArgb(25, 25, 25)
 $in.ForeColor = [System.Drawing.Color]::White
-$in.Font = New-Object System.Drawing.Font("Segoe UI", 16)
-$in.BorderStyle = "None"
+$in.Font = New-Object System.Drawing.Font("Segoe UI", 14)
+$in.BorderStyle = "FixedSingle"
 $in.TextAlign = "Center"
 $form.Controls.Add($in)
 
-$line = New-Object System.Windows.Forms.Label
-$line.Location = New-Object System.Drawing.Point(205, 265)
-$line.Size = New-Object System.Drawing.Size(240, 2)
-$line.BackColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
-$form.Controls.Add($line)
-
+# --- KNOP ---
 $btn = New-Object System.Windows.Forms.Button
-$btn.Text = "LAUNCH TOOL"
+$btn.Text = "EXECUTE"
 $btn.Size = New-Object System.Drawing.Size(240, 45)
 $btn.Location = New-Object System.Drawing.Point(205, 290)
 $btn.FlatStyle = "Flat"
@@ -54,12 +50,13 @@ $btn.BackColor = [System.Drawing.Color]::White
 $btn.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
 $form.Controls.Add($btn)
 
+# --- STATUS ---
 $status = New-Object System.Windows.Forms.Label
-$status.Text = "AWAITING PIN"
+$status.Text = "READY TO LAUNCH"
 $status.ForeColor = [System.Drawing.Color]::Gray
 $status.Location = New-Object System.Drawing.Point(0, 360)
 $status.Size = New-Object System.Drawing.Size(650, 20)
-$status.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+$status.TextAlign = "MiddleCenter"
 $form.Controls.Add($status)
 
 # --- SLUITEN ---
@@ -67,58 +64,66 @@ $close = New-Object System.Windows.Forms.Label
 $close.Text = "X"
 $close.ForeColor = [System.Drawing.Color]::Gray
 $close.Location = New-Object System.Drawing.Point(610, 15)
-$close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- LOGICA ---
+# --- DE ACTIE ---
 $btn.Add_Click({
     $p = $in.Text.Trim()
     if ($p.Length -lt 1) { return }
-    $status.Text = "VERIFYING..."
+    $status.Text = "FETCHING DATA..."
     
     try {
+        # Stap 1: Haal de rauwe data op
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
-        $data = Invoke-RestMethod -Uri $u -Method Get
-
-        if ($data) {
-            $status.Text = "SUCCESS"
-            $status.ForeColor = [System.Drawing.Color]::LimeGreen
-            $form.Refresh()
-
-            # ZOEKEN NAAR BESTAND (Houdt rekening met hoofdletters)
-            $bestandsLink = ""
-            if ($data.bestand) { $bestandsLink = $data.bestand }
-            elseif ($data.Bestand) { $bestandsLink = $data.Bestand }
-
-            if ($bestandsLink -like "http*") {
-                $status.Text = "DOWNLOADING..."
-                $form.Refresh()
-                $dest = "$env:TEMP\tool.exe"
-                Invoke-WebRequest -Uri $bestandsLink -OutFile $dest
-                Start-Process $dest
-            }
-
-            # ZOEKEN NAAR LINK (Houdt rekening met hoofdletters)
-            $webLink = ""
-            if ($data.link) { $webLink = $data.link }
-            elseif ($data.Link) { $webLink = $data.Link }
-
-            if ($webLink -like "http*") {
-                $status.Text = "OPENING WEBSITE..."
-                $form.Refresh()
-                # Dwing Windows om de link te openen via de default browser
-                Start-Process "explorer.exe" $webLink.Trim()
-            }
-
-            Start-Sleep -Seconds 1
-            $form.Close()
-        } else {
+        $rawJson = (New-Object System.Net.WebClient).DownloadString($u)
+        
+        if ($rawJson -eq "null" -or -not $rawJson) {
             $status.Text = "INVALID PIN"
             $status.ForeColor = [System.Drawing.Color]::Red
+            return
         }
+
+        # Converteer naar een object dat we kunnen lezen
+        $data = $rawJson | ConvertFrom-Json
+
+        # Stap 2: Zoek de download link (bestand)
+        # We kijken naar 'bestand', 'Bestand', of 'download'
+        $fileUrl = ""
+        if ($data.bestand) { $fileUrl = $data.bestand }
+        elseif ($data.Bestand) { $fileUrl = $data.Bestand }
+        elseif ($data.download) { $fileUrl = $data.download }
+
+        if ($fileUrl -like "http*") {
+            $status.Text = "DOWNLOADING..."
+            $form.Refresh()
+            $dest = "$env:TEMP\tool_installer.exe"
+            (New-Object System.Net.WebClient).DownloadFile($fileUrl, $dest)
+            Start-Process $dest
+        }
+
+        # Stap 3: Zoek de website link
+        # We kijken naar 'link', 'Link', of 'url'
+        $webUrl = ""
+        if ($data.link) { $webUrl = $data.link }
+        elseif ($data.Link) { $webUrl = $data.Link }
+        elseif ($data.url) { $webUrl = $data.url }
+
+        if ($webUrl -like "http*") {
+            $status.Text = "OPENING WEBSITE..."
+            $form.Refresh()
+            # De meest krachtige manier om de browser te openen:
+            [System.Diagnostics.Process]::Start($webUrl.Trim().Replace('"', ''))
+        }
+
+        $status.Text = "SUCCESS"
+        $status.ForeColor = [System.Drawing.Color]::LimeGreen
+        Start-Sleep -Seconds 2
+        $form.Close()
+
     } catch {
-        $status.Text = "CONNECTION ERROR"
+        $status.Text = "CRITICAL ERROR"
+        $status.ForeColor = [System.Drawing.Color]::Red
     }
 })
 
