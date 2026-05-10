@@ -1,15 +1,15 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# --- HET VENSTER (DARK THEME & MODERN) ---
+# --- HET VENSTER ---
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "MAZI SS"
 $form.Size = New-Object System.Drawing.Size(650, 480)
 $form.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $form.StartPosition = "CenterScreen"
-$form.FormBorderStyle = "None" # Verwijdert de witte balk voor die strakke look
+$form.FormBorderStyle = "None" 
 
-# Maak het venster sleepbaar (omdat de balk weg is)
+# Sleepfunctie
 $mouseDown = $false
 $form.add_MouseDown({ $script:mouseDown = $true; $script:startPos = [System.Windows.Forms.Cursor]::Position; $script:formPos = $form.Location })
 $form.add_MouseMove({
@@ -20,7 +20,7 @@ $form.add_MouseMove({
 })
 $form.add_MouseUp({ $script:mouseDown = $false })
 
-# --- TITEL (MAZI SS) ---
+# --- TITEL ---
 $title = New-Object System.Windows.Forms.Label
 $title.Text = "MAZI SS"
 $title.Font = New-Object System.Drawing.Font("Segoe UI", 22, [System.Drawing.FontStyle]::Bold)
@@ -29,7 +29,6 @@ $title.Location = New-Object System.Drawing.Point(40, 40)
 $title.Size = New-Object System.Drawing.Size(200, 50)
 $form.Controls.Add($title)
 
-# --- SUBTITEL (PREMIUM TOOLS) ---
 $subTitle = New-Object System.Windows.Forms.Label
 $subTitle.Text = "PREMIUM TOOLS"
 $subTitle.Font = New-Object System.Drawing.Font("Segoe UI", 8)
@@ -39,7 +38,7 @@ $subTitle.Size = New-Object System.Drawing.Size(120, 20)
 $subTitle.TextAlign = "Right"
 $form.Controls.Add($subTitle)
 
-# --- CENTRAAL ICON (MAGNIFIER) ---
+# --- ICON ---
 $icon = New-Object System.Windows.Forms.Label
 $icon.Text = "🔍"
 $icon.Font = New-Object System.Drawing.Font("Segoe UI", 45)
@@ -59,29 +58,28 @@ $pinText.Size = New-Object System.Drawing.Size(650, 30)
 $pinText.TextAlign = "MiddleCenter"
 $form.Controls.Add($pinText)
 
-# --- INPUT VELD (STREEP DESIGN) ---
+# --- INPUT VELD ---
 $inputBox = New-Object System.Windows.Forms.TextBox
 $inputBox.Size = New-Object System.Drawing.Size(200, 30)
 $inputBox.Location = New-Object System.Drawing.Point(225, 245)
 $inputBox.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $inputBox.ForeColor = [System.Drawing.Color]::White
 $inputBox.Font = New-Object System.Drawing.Font("Segoe UI", 14)
-$inputBox.BorderStyle = "None" # Geen rand voor een moderne look
+$inputBox.BorderStyle = "None"
 $inputBox.TextAlign = "Center"
 $form.Controls.Add($inputBox)
 
-# Blauwe lijn onder input
 $line = New-Object System.Windows.Forms.Label
 $line.Location = New-Object System.Drawing.Point(225, 275)
 $line.Size = New-Object System.Drawing.Size(200, 2)
 $line.BackColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $form.Controls.Add($line)
 
-# --- KNOP (CHECK & DOWNLOAD) ---
+# --- DE NIEUWE KNOP (ZONDER TEKST "CHECK DOWNLOAD") ---
 $btn = New-Object System.Windows.Forms.Button
-$btn.Text = "CHECK & DOWNLOAD"
-$btn.Size = New-Object System.Drawing.Size(220, 45)
-$btn.Location = New-Object System.Drawing.Point(215, 300)
+$btn.Text = "AUTHENTICATE" # Kortere tekst, of laat leeg "" voor alleen een blokje
+$btn.Size = New-Object System.Drawing.Size(200, 40)
+$btn.Location = New-Object System.Drawing.Point(225, 300)
 $btn.FlatStyle = "Flat"
 $btn.BackColor = [System.Drawing.Color]::White
 $btn.ForeColor = [System.Drawing.Color]::Black
@@ -89,7 +87,7 @@ $btn.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontSt
 $btn.FlatAppearance.BorderSize = 0
 $form.Controls.Add($btn)
 
-# --- STATUS (SYSTEM READY) ---
+# --- STATUS ---
 $status = New-Object System.Windows.Forms.Label
 $status.Text = "SYSTEM READY"
 $status.ForeColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
@@ -99,7 +97,7 @@ $status.Size = New-Object System.Drawing.Size(650, 20)
 $status.TextAlign = "MiddleCenter"
 $form.Controls.Add($status)
 
-# --- LOG BOX (ONDERAAN) ---
+# --- LOGS ---
 $logBox = New-Object System.Windows.Forms.RichTextBox
 $logBox.Size = New-Object System.Drawing.Size(570, 60)
 $logBox.Location = New-Object System.Drawing.Point(40, 390)
@@ -111,7 +109,7 @@ $logBox.ReadOnly = $true
 $logBox.Text = "[SYS] Awaiting input..."
 $form.Controls.Add($logBox)
 
-# --- SLUITEN KNOP (X) ---
+# --- SLUITEN ---
 $close = New-Object System.Windows.Forms.Label
 $close.Text = "✕"
 $close.ForeColor = [System.Drawing.Color]::Gray
@@ -120,12 +118,11 @@ $close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- FIREBASE LOGIC ---
+# --- LOGICA ---
 $btn.Add_Click({
     $pin = $inputBox.Text
     if ($pin.Length -lt 1) { return }
     $status.Text = "VERIFYING..."
-    $logBox.AppendText("`n[SYS] Checking database for PIN: $pin")
     
     try {
         $url = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$pin.json"
@@ -133,16 +130,13 @@ $btn.Add_Click({
         if ($dlLink) {
             $status.Text = "SUCCESS"
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
-            $logBox.AppendText("`n[AUTH] Access Granted. Triggering download...")
             Start-Process $dlLink
         } else {
             $status.Text = "INVALID PIN"
             $status.ForeColor = [System.Drawing.Color]::Red
-            $logBox.AppendText("`n[ERR] PIN not found.")
         }
     } catch {
         $status.Text = "ERROR"
-        $logBox.AppendText("`n[ERR] Connection failed.")
     }
 })
 
