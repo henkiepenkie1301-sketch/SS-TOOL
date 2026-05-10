@@ -9,7 +9,7 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "None" 
 
-# Sleepfunctie
+# Sleepfunctie (Omdat de balk weg is)
 $mouseDown = $false
 $form.add_MouseDown({ $script:mouseDown = $true; $script:startPos = [System.Windows.Forms.Cursor]::Position; $script:formPos = $form.Location })
 $form.add_MouseMove({
@@ -38,7 +38,7 @@ $subTitle.Size = New-Object System.Drawing.Size(120, 20)
 $subTitle.TextAlign = "Right"
 $form.Controls.Add($subTitle)
 
-# --- ICON (GEEN EMOJI MEER, MAAR VEILIG SYMBOOL) ---
+# --- ICON (VEILIG SYMBOOL) ---
 $icon = New-Object System.Windows.Forms.Label
 $icon.Text = "O" 
 $icon.Font = New-Object System.Drawing.Font("Segoe UI", 45, [System.Drawing.FontStyle]::Bold)
@@ -75,15 +75,15 @@ $line.Size = New-Object System.Drawing.Size(200, 2)
 $line.BackColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $form.Controls.Add($line)
 
-# --- KNOP ---
+# --- KNOP (ZONDER "CHECK DOWNLOAD") ---
 $btn = New-Object System.Windows.Forms.Button
-$btn.Text = "AUTHENTICATE"
+$btn.Text = "ENTER"
 $btn.Size = New-Object System.Drawing.Size(200, 40)
 $btn.Location = New-Object System.Drawing.Point(225, 300)
 $btn.FlatStyle = "Flat"
 $btn.BackColor = [System.Drawing.Color]::White
 $btn.ForeColor = [System.Drawing.Color]::Black
-$btn.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+$btn.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 $btn.FlatAppearance.BorderSize = 0
 $form.Controls.Add($btn)
 
@@ -97,7 +97,7 @@ $status.Size = New-Object System.Drawing.Size(650, 20)
 $status.TextAlign = "MiddleCenter"
 $form.Controls.Add($status)
 
-# --- LOGS (KORTER GEMAAKT) ---
+# --- LOGS ---
 $logBox = New-Object System.Windows.Forms.Label
 $logBox.Size = New-Object System.Drawing.Size(570, 40)
 $logBox.Location = New-Object System.Drawing.Point(40, 400)
@@ -122,7 +122,7 @@ $btn.Add_Click({
     $status.Text = "VERIFYING..."
     try {
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
-        $d = Invoke-RestMethod -Uri $u -Method Get
+        $d = Invoke-WebRequest -Uri $u -UseBasicParsing | ConvertFrom-Json
         if ($d) {
             $status.Text = "SUCCESS"
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
