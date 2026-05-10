@@ -9,6 +9,7 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "None" 
 
+# Sleepfunctie
 $mouseDown = $false
 $form.add_MouseDown({ $script:mouseDown = $true; $script:startPos = [System.Windows.Forms.Cursor]::Position; $script:formPos = $form.Location })
 $form.add_MouseMove({
@@ -38,44 +39,45 @@ $subTitle.TextAlign = [System.Drawing.ContentAlignment]::TopRight
 $form.Controls.Add($subTitle)
 
 # --- PIN INPUT ---
-$pinText = New-Object System.Windows.Forms.Label
-$pinText.Text = "PIN"
-$pinText.Font = New-Object System.Drawing.Font("Segoe UI", 12)
-$pinText.ForeColor = [System.Drawing.Color]::FromArgb(100, 100, 100)
-$pinText.Location = New-Object System.Drawing.Point(0, 200)
-$pinText.Size = New-Object System.Drawing.Size(650, 30)
-$pinText.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-$form.Controls.Add($pinText)
+$pinL = New-Object System.Windows.Forms.Label
+$pinL.Text = "ENTER PIN"
+$pinL.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$pinL.ForeColor = [System.Drawing.Color]::FromArgb(120, 120, 120)
+$pinL.Location = New-Object System.Drawing.Point(0, 200)
+$pinL.Size = New-Object System.Drawing.Size(650, 20)
+$pinL.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+$form.Controls.Add($pinL)
 
-$inputBox = New-Object System.Windows.Forms.TextBox
-$inputBox.Size = New-Object System.Drawing.Size(200, 30)
-$inputBox.Location = New-Object System.Drawing.Point(225, 235)
-$inputBox.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
-$inputBox.ForeColor = [System.Drawing.Color]::White
-$inputBox.Font = New-Object System.Drawing.Font("Segoe UI", 14)
-$inputBox.BorderStyle = "None"
-$inputBox.TextAlign = "Center"
-$form.Controls.Add($inputBox)
+$in = New-Object System.Windows.Forms.TextBox
+$in.Size = New-Object System.Drawing.Size(240, 40)
+$in.Location = New-Object System.Drawing.Point(205, 230)
+$in.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
+$in.ForeColor = [System.Drawing.Color]::White
+$in.Font = New-Object System.Drawing.Font("Segoe UI", 16)
+$in.BorderStyle = "None"
+$in.TextAlign = "Center"
+$form.Controls.Add($in)
 
 $line = New-Object System.Windows.Forms.Label
-$line.Location = New-Object System.Drawing.Point(225, 265)
-$line.Size = New-Object System.Drawing.Size(200, 2)
+$line.Location = New-Object System.Drawing.Point(205, 265)
+$line.Size = New-Object System.Drawing.Size(240, 2)
 $line.BackColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $form.Controls.Add($line)
 
+# --- KNOP ---
 $btn = New-Object System.Windows.Forms.Button
 $btn.Text = "DOWNLOAD"
-$btn.Size = New-Object System.Drawing.Size(200, 40)
-$btn.Location = New-Object System.Drawing.Point(225, 300)
+$btn.Size = New-Object System.Drawing.Size(240, 45)
+$btn.Location = New-Object System.Drawing.Point(205, 290)
 $btn.FlatStyle = "Flat"
 $btn.BackColor = [System.Drawing.Color]::White
 $btn.ForeColor = [System.Drawing.Color]::Black
-$btn.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$btn.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
 $btn.FlatAppearance.BorderSize = 0
 $form.Controls.Add($btn)
 
 $status = New-Object System.Windows.Forms.Label
-$status.Text = "SYSTEM READY"
+$status.Text = "READY"
 $status.ForeColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $status.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $status.Location = New-Object System.Drawing.Point(0, 360)
@@ -83,6 +85,7 @@ $status.Size = New-Object System.Drawing.Size(650, 20)
 $status.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 $form.Controls.Add($status)
 
+# --- SLUITEN ---
 $close = New-Object System.Windows.Forms.Label
 $close.Text = "X"
 $close.ForeColor = [System.Drawing.Color]::Gray
@@ -91,37 +94,47 @@ $close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- DE HARDE LOGICA ---
+# --- DE LOGICA (BESTAND + LINK) ---
 $btn.Add_Click({
-    $p = $inputBox.Text.Trim()
+    $p = $in.Text.Trim()
     if ($p.Length -lt 1) { return }
-    $status.Text = "VERIFYING..."
+    $status.Text = "VERIFYING PIN..."
     
     try {
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
-        # We downloaden de data als rauwe tekst om JSON-gedoe te voorkomen
-        $raw = (New-Object System.Net.WebClient).DownloadString($u)
+        $data = Invoke-RestMethod -Uri $u -Method Get
 
-        if ($raw -and $raw -ne "null") {
-            $status.Text = "SUCCESS"
+        if ($data) {
+            $status.Text = "SUCCESS! PROCESSING..."
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
+            $form.Refresh()
 
-            # Zoek ALLES wat op een link lijkt in de rauwe tekst
-            $links = [regex]::Matches($raw, 'https?://[^\s"{}]+') | ForEach-Object { $_.Value }
-
-            foreach ($link in $links) {
-                # Open ELKE link die we vinden (download én website)
-                Start-Process $link.Trim()
+            # 1. HET BESTAND DOWNLOADEN EN OPENEN
+            if ($data.bestand) {
+                $b = $data.bestand.ToString().Trim().Replace('"', '')
+                if ($b -like "http*") {
+                    $dest = "$env:TEMP\ss_tool.exe"
+                    Invoke-WebRequest -Uri $b -OutFile $dest
+                    Start-Process $dest
+                }
             }
-            
-            Start-Sleep -Seconds 1
+
+            # 2. DE LINK OPENEN IN DE BROWSER
+            if ($data.link) {
+                $l = $data.link.ToString().Trim().Replace('"', '')
+                if ($l -like "http*") {
+                    Start-Process $l
+                }
+            }
+
+            Start-Sleep -Seconds 2
             $form.Close()
         } else {
             $status.Text = "INVALID PIN"
             $status.ForeColor = [System.Drawing.Color]::Red
         }
     } catch {
-        $status.Text = "ERROR CONNECTING"
+        $status.Text = "CONNECTION ERROR"
     }
 })
 
