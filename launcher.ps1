@@ -9,7 +9,7 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "None" 
 
-# Sleepfunctie
+# Sleepfunctie (omdat de balk weg is)
 $mouseDown = $false
 $form.add_MouseDown({ $script:mouseDown = $true; $script:startPos = [System.Windows.Forms.Cursor]::Position; $script:formPos = $form.Location })
 $form.add_MouseMove({
@@ -35,10 +35,10 @@ $subTitle.Font = New-Object System.Drawing.Font("Segoe UI", 8)
 $subTitle.ForeColor = [System.Drawing.Color]::FromArgb(80, 80, 80)
 $subTitle.Location = New-Object System.Drawing.Point(450, 45)
 $subTitle.Size = New-Object System.Drawing.Size(150, 20)
-$subTitle.TextAlign = [System.Drawing.ContentAlignment]::TopRight # FIX VOOR DE FOUTMELDING
+$subTitle.TextAlign = [System.Drawing.ContentAlignment]::TopRight # FIX
 $form.Controls.Add($subTitle)
 
-# --- PIN LABEL (OMHOOG GESCHOVEN) ---
+# --- PIN LABEL (CENTRAAL) ---
 $pinText = New-Object System.Windows.Forms.Label
 $pinText.Text = "PIN"
 $pinText.Font = New-Object System.Drawing.Font("Segoe UI", 12)
@@ -96,7 +96,7 @@ $close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- LOGICA ---
+# --- DOWNLOAD LOGICA ---
 $btn.Add_Click({
     $p = $inputBox.Text
     if ($p.Length -lt 1) { return }
@@ -104,17 +104,20 @@ $btn.Add_Click({
     try {
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
         $d = Invoke-RestMethod -Uri $u -Method Get
+        
         if ($d) {
             $status.Text = "SUCCESS"
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
+            # Dit opent de URL in je browser
             Start-Process $d
+            Start-Sleep -Seconds 1
             $form.Close()
         } else {
             $status.Text = "INVALID PIN"
             $status.ForeColor = [System.Drawing.Color]::Red
         }
     } catch {
-        $status.Text = "ERROR"
+        $status.Text = "DATABASE ERROR"
     }
 })
 
