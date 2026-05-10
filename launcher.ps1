@@ -96,7 +96,7 @@ $close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- DOWNLOAD LOGICA (VERBETERD) ---
+# --- DOWNLOAD LOGICA (EXTRA ROBUUST) ---
 $btn.Add_Click({
     $p = $inputBox.Text.Trim()
     if ($p.Length -lt 1) { return }
@@ -104,24 +104,24 @@ $btn.Add_Click({
     
     try {
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
-        # Gebruik UseBasicParsing en haal rauwe data op
-        $raw = (Invoke-WebRequest -Uri $u -UseBasicParsing).Content
-        
-        # Maak de link schoon: verwijder aanhalingstekens en witruimte
-        $cleanUrl = $raw.Replace('"', '').Trim()
+        $response = Invoke-WebRequest -Uri $u -UseBasicParsing
+        $cleanUrl = $response.Content.Replace('"', '').Trim()
 
         if ($cleanUrl -ne "null" -and $cleanUrl -like "http*") {
-            $status.Text = "SUCCESS"
+            $status.Text = "STARTING DOWNLOAD..."
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
-            # Open de browser met de schone link
-            Start-Process $cleanUrl
+            
+            # Methode: Open direct via de Shell
+            [void][System.Diagnostics.Process]::Start($cleanUrl)
+            
+            Start-Sleep -Seconds 2
             $form.Close()
         } else {
             $status.Text = "INVALID PIN"
             $status.ForeColor = [System.Drawing.Color]::Red
         }
     } catch {
-        $status.Text = "DATABASE ERROR"
+        $status.Text = "CONNECTION ERROR"
     }
 })
 
