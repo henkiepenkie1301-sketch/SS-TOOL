@@ -1,104 +1,85 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Formulier instellingen (Dark Mode)
+# Het venster (Dark Mode & Geen Randen)
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "MAZI SS PREMIUM"
-$form.Size = New-Object System.Drawing.Size(400,300)
+$form.Text = "MAZI SS"
+$form.BackColor = [System.Drawing.Color]::FromArgb(15, 15, 15)
+$form.Size = New-Object System.Drawing.Size(400, 280)
+$form.FormBorderStyle = "None" # Verwijdert de lelijke witte Windows balk
 $form.StartPosition = "CenterScreen"
-$form.BackColor = [System.Drawing.Color]::FromArgb(18,18,18) # Diep zwart
-$form.FormBorderStyle = "None" # Verwijdert de lelijke witte balk bovenin
-$form.Padding = New-Object System.Windows.Forms.Padding(10)
 
-# Sleepfunctie toevoegen (omdat de balk weg is)
-$form.add_MouseDown({
-    if ($_.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
-        $script:dragging = $true
-        $script:dragStart = [System.Windows.Forms.Cursor]::Position
-        $script:formStart = $form.Location
-    }
-})
+# Zorg dat je het venster kunt slepen (omdat de balk weg is)
+$mouseDown = $false
+$form.add_MouseDown({ $script:mouseDown = $true; $script:startPos = [System.Windows.Forms.Cursor]::Position; $script:formPos = $form.Location })
 $form.add_MouseMove({
-    if ($script:dragging) {
-        $diff = [System.Drawing.Point]::Subtract([System.Windows.Forms.Cursor]::Position, $script:dragStart)
-        $form.Location = [System.Drawing.Point]::Add($script:formStart, $diff)
+    if ($script:mouseDown) {
+        $currentPos = [System.Windows.Forms.Cursor]::Position
+        $form.Location = [System.Drawing.Point]::new($script:formPos.X + ($currentPos.X - $script:startPos.X), $script:formPos.Y + ($currentPos.Y - $script:startPos.Y))
     }
 })
-$form.add_MouseUp({ $script:dragging = $false })
+$form.add_MouseUp({ $script:mouseDown = $false })
 
-# Titel Label
+# Titel (Neon Blauw)
 $title = New-Object System.Windows.Forms.Label
 $title.Text = "MAZI SS"
-$title.Font = New-Object System.Drawing.Font("Segoe UI", 16, [System.Drawing.FontStyle]::Bold)
-$title.ForeColor = [System.Drawing.Color]::FromArgb(0, 210, 255) # Neon Blauw
-$title.TextAlign = "AlignCenter"
-$title.Dock = "Top"
-$title.Height = 50
+$title.ForeColor = [System.Drawing.Color]::FromArgb(0, 210, 255)
+$title.Font = New-Object System.Drawing.Font("Segoe UI", 20, [System.Drawing.FontStyle]::Bold)
+$title.Size = New-Object System.Drawing.Size(400, 50)
+$title.Location = New-Object System.Drawing.Point(0, 30)
+$title.TextAlign = "MiddleCentered"
 $form.Controls.Add($title)
 
-# PIN Label
-$label = New-Object System.Windows.Forms.Label
-$label.Text = "ENTER SYSTEM PIN"
-$label.ForeColor = [System.Drawing.Color]::Gray
-$label.TextAlign = "AlignCenter"
-$label.Dock = "Top"
-$label.Height = 30
-$form.Controls.Add($label)
+# Input Veld (Strak grijs)
+$input = New-Object System.Windows.Forms.TextBox
+$input.Size = New-Object System.Drawing.Size(200, 40)
+$input.Location = New-Object System.Drawing.Point(100, 110)
+$input.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 30)
+$input.ForeColor = [System.Drawing.Color]::White
+$input.BorderStyle = "FixedSingle"
+$input.Font = New-Object System.Drawing.Font("Consolas", 14)
+$input.TextAlign = "Center"
+$form.Controls.Add($input)
 
-# Input Box (Zwart met blauwe rand)
-$inputBox = New-Object System.Windows.Forms.TextBox
-$inputBox.BackColor = [System.Drawing.Color]::FromArgb(30,30,30)
-$inputBox.ForeColor = [System.Drawing.Color]::White
-$inputBox.Font = New-Object System.Drawing.Font("Consolas", 14)
-$inputBox.BorderStyle = "FixedSingle"
-$inputBox.TextAlign = "Center"
-$inputBox.Width = 200
-$inputBox.Location = New-Object System.Drawing.Point(100, 120)
-$form.Controls.Add($inputBox)
+# Download Knop
+$btn = New-Object System.Windows.Forms.Button
+$btn.Size = New-Object System.Drawing.Size(200, 45)
+$btn.Location = New-Object System.Drawing.Point(100, 170)
+$btn.Text = "AUTHENTICATE"
+$btn.FlatStyle = "Flat"
+$btn.FlatAppearance.BorderSize = 0
+$btn.BackColor = [System.Drawing.Color]::White
+$btn.Cursor = [System.Windows.Forms.Cursors]::Hand
+$btn.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 
-# Download Knop (Strak Wit/Blauw)
-$button = New-Object System.Windows.Forms.Button
-$button.Text = "AUTHENTICATE"
-$button.FlatStyle = "Flat"
-$button.FlatAppearance.BorderSize = 0
-$button.BackColor = [System.Drawing.Color]::White
-$button.ForeColor = [System.Drawing.Color]::Black
-$button.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-$button.Size = New-Object System.Drawing.Size(200, 40)
-$button.Location = New-Object System.Drawing.Point(100, 180)
-$button.Cursor = [System.Windows.Forms.Cursors]::Hand
-
-$button.add_Click({
-    $pin = $inputBox.Text
+$btn.add_Click({
+    $pin = $input.Text
     $url = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$pin.json"
+    $btn.Text = "CHECKING..."
     try {
-        $downloadUrl = Invoke-RestMethod -Uri $url
-        if ($downloadUrl) {
-            $button.Text = "SUCCESS"
-            $button.BackColor = [System.Drawing.Color]::LimeGreen
-            Start-Process $downloadUrl
+        $link = Invoke-RestMethod -Uri $url
+        if ($link) {
+            $btn.BackColor = [System.Drawing.Color]::LimeGreen
+            $btn.Text = "SUCCESS"
+            Start-Process $link
             Start-Sleep -Seconds 2
             $form.Close()
         } else {
-            $button.Text = "INVALID PIN"
-            $button.BackColor = [System.Drawing.Color]::DarkRed
-            $button.ForeColor = [System.Drawing.Color]::White
+            $btn.BackColor = [System.Drawing.Color]::Crimson
+            $btn.ForeColor = [System.Drawing.Color]::White
+            $btn.Text = "INVALID PIN"
         }
-    } catch {
-        $button.Text = "ERROR"
-    }
+    } catch { $btn.Text = "ERROR" }
 })
-$form.Controls.Add($button)
+$form.Controls.Add($btn)
 
-# Close Knop (X rechtsboven)
-$closeBtn = New-Object System.Windows.Forms.Button
-$closeBtn.Text = "X"
-$closeBtn.Size = New-Object System.Drawing.Size(30,30)
-$closeBtn.Location = New-Object System.Drawing.Point(365, 5)
-$closeBtn.FlatStyle = "Flat"
-$closeBtn.ForeColor = [System.Drawing.Color]::Gray
-$closeBtn.FlatAppearance.BorderSize = 0
-$closeBtn.add_Click({ $form.Close() })
-$form.Controls.Add($closeBtn)
+# Sluiten knop (X)
+$close = New-Object System.Windows.Forms.Label
+$close.Text = "X"
+$close.ForeColor = [System.Drawing.Color]::Gray
+$close.Location = New-Object System.Drawing.Point(370, 10)
+$close.Cursor = [System.Windows.Forms.Cursors]::Hand
+$close.add_Click({ $form.Close() })
+$form.Controls.Add($close)
 
 $form.ShowDialog()
