@@ -1,6 +1,3 @@
-# Forceer TLS 1.2 voor veilige verbinding met Firebase/GitHub
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -11,7 +8,6 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
 
-# --- UI ELEMENTEN ---
 $title = New-Object System.Windows.Forms.Label
 $title.Text = "MAZI SS"
 $title.Font = New-Object System.Drawing.Font("Segoe UI", 20, [System.Drawing.FontStyle]::Bold)
@@ -47,21 +43,18 @@ $status.Size = New-Object System.Drawing.Size(650, 30)
 $status.TextAlign = "MiddleCenter"
 $form.Controls.Add($status)
 
-# --- DE FIREBASE ACTIE ---
 $btn.Add_Click({
+    $pin = $inputBox.Text
+    $url = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$pin.json"
     try {
-        $pin = $inputBox.Text
-        $url = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$pin.json"
-        $downloadUrl = Invoke-RestMethod -Uri $url -Method Get
-        if ($null -ne $downloadUrl) {
+        $res = Invoke-RestMethod -Uri $url -Method Get
+        if ($res) {
             $status.Text = "SUCCESS"
-            Start-Process $downloadUrl
+            Start-Process $res
         } else {
             $status.Text = "INVALID PIN"
         }
-    } catch {
-        [System.Windows.Forms.MessageBox]::Show("Fout: $($_.Exception.Message)")
-    }
+    } catch { $status.Text = "ERROR" }
 })
 
 $form.ShowDialog()
