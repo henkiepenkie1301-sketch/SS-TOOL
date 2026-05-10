@@ -38,10 +38,10 @@ $subTitle.Size = New-Object System.Drawing.Size(120, 20)
 $subTitle.TextAlign = "Right"
 $form.Controls.Add($subTitle)
 
-# --- ICON ---
+# --- ICON (GEEN EMOJI MEER, MAAR VEILIG SYMBOOL) ---
 $icon = New-Object System.Windows.Forms.Label
-$icon.Text = "🔍"
-$icon.Font = New-Object System.Drawing.Font("Segoe UI", 45)
+$icon.Text = "O" 
+$icon.Font = New-Object System.Drawing.Font("Segoe UI", 45, [System.Drawing.FontStyle]::Bold)
 $icon.ForeColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $icon.Location = New-Object System.Drawing.Point(275, 100)
 $icon.Size = New-Object System.Drawing.Size(100, 100)
@@ -75,9 +75,9 @@ $line.Size = New-Object System.Drawing.Size(200, 2)
 $line.BackColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $form.Controls.Add($line)
 
-# --- DE NIEUWE KNOP (ZONDER TEKST "CHECK DOWNLOAD") ---
+# --- KNOP ---
 $btn = New-Object System.Windows.Forms.Button
-$btn.Text = "AUTHENTICATE" # Kortere tekst, of laat leeg "" voor alleen een blokje
+$btn.Text = "AUTHENTICATE"
 $btn.Size = New-Object System.Drawing.Size(200, 40)
 $btn.Location = New-Object System.Drawing.Point(225, 300)
 $btn.FlatStyle = "Flat"
@@ -97,21 +97,18 @@ $status.Size = New-Object System.Drawing.Size(650, 20)
 $status.TextAlign = "MiddleCenter"
 $form.Controls.Add($status)
 
-# --- LOGS ---
-$logBox = New-Object System.Windows.Forms.RichTextBox
-$logBox.Size = New-Object System.Drawing.Size(570, 60)
-$logBox.Location = New-Object System.Drawing.Point(40, 390)
-$logBox.BackColor = [System.Drawing.Color]::FromArgb(10, 10, 10)
-$logBox.ForeColor = [System.Drawing.Color]::FromArgb(60, 60, 60)
+# --- LOGS (KORTER GEMAAKT) ---
+$logBox = New-Object System.Windows.Forms.Label
+$logBox.Size = New-Object System.Drawing.Size(570, 40)
+$logBox.Location = New-Object System.Drawing.Point(40, 400)
+$logBox.ForeColor = [System.Drawing.Color]::DimGray
 $logBox.Font = New-Object System.Drawing.Font("Consolas", 8)
-$logBox.BorderStyle = "None"
-$logBox.ReadOnly = $true
 $logBox.Text = "[SYS] Awaiting input..."
 $form.Controls.Add($logBox)
 
 # --- SLUITEN ---
 $close = New-Object System.Windows.Forms.Label
-$close.Text = "✕"
+$close.Text = "X"
 $close.ForeColor = [System.Drawing.Color]::Gray
 $close.Location = New-Object System.Drawing.Point(610, 15)
 $close.Cursor = [System.Windows.Forms.Cursors]::Hand
@@ -120,17 +117,17 @@ $form.Controls.Add($close)
 
 # --- LOGICA ---
 $btn.Add_Click({
-    $pin = $inputBox.Text
-    if ($pin.Length -lt 1) { return }
+    $p = $inputBox.Text
+    if ($p.Length -lt 1) { return }
     $status.Text = "VERIFYING..."
-    
     try {
-        $url = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$pin.json"
-        $dlLink = Invoke-RestMethod -Uri $url -Method Get
-        if ($dlLink) {
+        $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
+        $d = Invoke-RestMethod -Uri $u -Method Get
+        if ($d) {
             $status.Text = "SUCCESS"
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
-            Start-Process $dlLink
+            Start-Process $d
+            $form.Close()
         } else {
             $status.Text = "INVALID PIN"
             $status.ForeColor = [System.Drawing.Color]::Red
