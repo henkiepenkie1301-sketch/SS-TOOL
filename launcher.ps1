@@ -95,36 +95,31 @@ $close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- LOGICA VOOR DOWNLOAD + LINK ---
+# --- DE NIEUWE LOGICA (ZOEKT ALLE LINKJES) ---
 $btn.Add_Click({
     $p = $inputBox.Text.Trim()
     if ($p.Length -lt 1) { return }
     $status.Text = "CONNECTING..."
     
     try {
-        # We halen de data op voor de specifieke PIN
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
         $data = Invoke-RestMethod -Uri $u -Method Get
 
         if ($data) {
-            # Stap 1: De Download (als er een download link is)
-            if ($data.download) {
-                $status.Text = "DOWNLOADING TOOL..."
-                $status.ForeColor = [System.Drawing.Color]::LimeGreen
-                $fileName = $data.download.Split('/')[-1]
-                if ($fileName -notlike "*.*") { $fileName = "tool.exe" }
-                $path = "$env:USERPROFILE\Downloads\$fileName"
+            $status.Text = "SUCCESS"
+            $status.ForeColor = [System.Drawing.Color]::LimeGreen
+
+            # We lopen door alle velden in de Firebase data heen (bijv. 'download' en 'link')
+            $data.PSObject.Properties | ForEach-Object {
+                $val = $_.Value.ToString().Trim().Replace('"', '')
                 
-                Invoke-WebRequest -Uri $data.download -OutFile $path
-                Start-Process $path
+                # Als de waarde begint met http, openen we het
+                if ($val -like "http*") {
+                    Start-Process $val
+                }
             }
-
-            # Stap 2: De Link (openen in browser)
-            if ($data.link) {
-                $status.Text = "OPENING WEBSITE..."
-                Start-Process $data.link
-            }
-
+            
+            Start-Sleep -Seconds 1
             $form.Close()
         } else {
             $status.Text = "INVALID PIN"
