@@ -38,7 +38,7 @@ $subTitle.Size = New-Object System.Drawing.Size(120, 20)
 $subTitle.TextAlign = "Right"
 $form.Controls.Add($subTitle)
 
-# --- ICON (VEILIG SYMBOOL) ---
+# --- ICON (VEILIG SYMBOOL ZONDER EMOJI) ---
 $icon = New-Object System.Windows.Forms.Label
 $icon.Text = "O" 
 $icon.Font = New-Object System.Drawing.Font("Segoe UI", 45, [System.Drawing.FontStyle]::Bold)
@@ -75,9 +75,9 @@ $line.Size = New-Object System.Drawing.Size(200, 2)
 $line.BackColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $form.Controls.Add($line)
 
-# --- KNOP (ZONDER "CHECK DOWNLOAD") ---
+# --- KNOP (TEKST GEWIJZIGD NAAR DOWNLOAD) ---
 $btn = New-Object System.Windows.Forms.Button
-$btn.Text = "ENTER"
+$btn.Text = "DOWNLOAD"
 $btn.Size = New-Object System.Drawing.Size(200, 40)
 $btn.Location = New-Object System.Drawing.Point(225, 300)
 $btn.FlatStyle = "Flat"
@@ -122,7 +122,7 @@ $btn.Add_Click({
     $status.Text = "VERIFYING..."
     try {
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
-        $d = Invoke-WebRequest -Uri $u -UseBasicParsing | ConvertFrom-Json
+        $d = Invoke-RestMethod -Uri $u -Method Get
         if ($d) {
             $status.Text = "SUCCESS"
             $status.ForeColor = [System.Drawing.Color]::LimeGreen
