@@ -35,17 +35,17 @@ $subTitle.Font = New-Object System.Drawing.Font("Segoe UI", 8)
 $subTitle.ForeColor = [System.Drawing.Color]::FromArgb(80, 80, 80)
 $subTitle.Location = New-Object System.Drawing.Point(450, 45)
 $subTitle.Size = New-Object System.Drawing.Size(150, 20)
-$subTitle.TextAlign = "TopRight" # DIT IS DE FIX VOOR JE FOUTMELDING
+$subTitle.TextAlign = [System.Drawing.ContentAlignment]::TopRight # FIX VOOR DE FOUTMELDING
 $form.Controls.Add($subTitle)
 
-# --- PIN LABEL (IETS HOGER OMDAT ICON WEG IS) ---
+# --- PIN LABEL (OMHOOG GESCHOVEN) ---
 $pinText = New-Object System.Windows.Forms.Label
 $pinText.Text = "PIN"
 $pinText.Font = New-Object System.Drawing.Font("Segoe UI", 12)
 $pinText.ForeColor = [System.Drawing.Color]::FromArgb(100, 100, 100)
 $pinText.Location = New-Object System.Drawing.Point(0, 180)
 $pinText.Size = New-Object System.Drawing.Size(650, 30)
-$pinText.TextAlign = "MiddleCenter"
+$pinText.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 $form.Controls.Add($pinText)
 
 # --- INPUT VELD ---
@@ -84,7 +84,7 @@ $status.ForeColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $status.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $status.Location = New-Object System.Drawing.Point(0, 340)
 $status.Size = New-Object System.Drawing.Size(650, 20)
-$status.TextAlign = "MiddleCenter"
+$status.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
 $form.Controls.Add($status)
 
 # --- SLUITEN ---
