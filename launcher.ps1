@@ -95,39 +95,43 @@ $close.Cursor = [System.Windows.Forms.Cursors]::Hand
 $close.add_Click({ $form.Close() })
 $form.Controls.Add($close)
 
-# --- DE NIEUWE LOGICA ---
+# --- LOGICA VOOR DOWNLOAD + LINK ---
 $btn.Add_Click({
     $p = $inputBox.Text.Trim()
     if ($p.Length -lt 1) { return }
-    $status.Text = "VERIFYING..."
+    $status.Text = "CONNECTING..."
     
     try {
+        # We halen de data op voor de specifieke PIN
         $u = "https://ss-mazi-default-rtdb.europe-west1.firebasedatabase.app/pins/$p.json"
-        $link = (Invoke-WebRequest -Uri $u -UseBasicParsing).Content.Replace('"', '').Trim()
+        $data = Invoke-RestMethod -Uri $u -Method Get
 
-        if ($link -ne "null" -and $link -like "http*") {
-            $status.Text = "DOWNLOADING..."
-            $status.ForeColor = [System.Drawing.Color]::LimeGreen
-            
-            # Bepaal bestandsnaam (bijv. tool.exe of tool.zip)
-            $fileName = $link.Split('/')[-1]
-            if ($fileName -notlike "*.*") { $fileName = "download.exe" }
-            $path = "$env:USERPROFILE\Downloads\$fileName"
-            
-            # Download het bestand direct zonder browser
-            Invoke-WebRequest -Uri $link -OutFile $path
-            
-            $status.Text = "OPENING..."
-            Start-Process $path
-            Start-Sleep -Seconds 2
+        if ($data) {
+            # Stap 1: De Download (als er een download link is)
+            if ($data.download) {
+                $status.Text = "DOWNLOADING TOOL..."
+                $status.ForeColor = [System.Drawing.Color]::LimeGreen
+                $fileName = $data.download.Split('/')[-1]
+                if ($fileName -notlike "*.*") { $fileName = "tool.exe" }
+                $path = "$env:USERPROFILE\Downloads\$fileName"
+                
+                Invoke-WebRequest -Uri $data.download -OutFile $path
+                Start-Process $path
+            }
+
+            # Stap 2: De Link (openen in browser)
+            if ($data.link) {
+                $status.Text = "OPENING WEBSITE..."
+                Start-Process $data.link
+            }
+
             $form.Close()
         } else {
             $status.Text = "INVALID PIN"
             $status.ForeColor = [System.Drawing.Color]::Red
         }
     } catch {
-        $status.Text = "DOWNLOAD FAILED"
-        $status.ForeColor = [System.Drawing.Color]::Orange
+        $status.Text = "DATABASE ERROR"
     }
 })
 
