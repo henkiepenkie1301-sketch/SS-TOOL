@@ -38,22 +38,12 @@ $subTitle.Size = New-Object System.Drawing.Size(120, 20)
 $subTitle.TextAlign = "Right"
 $form.Controls.Add($subTitle)
 
-# --- ICON (VEILIG SYMBOOL ZONDER EMOJI) ---
-$icon = New-Object System.Windows.Forms.Label
-$icon.Text = "O" 
-$icon.Font = New-Object System.Drawing.Font("Segoe UI", 45, [System.Drawing.FontStyle]::Bold)
-$icon.ForeColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
-$icon.Location = New-Object System.Drawing.Point(275, 100)
-$icon.Size = New-Object System.Drawing.Size(100, 100)
-$icon.TextAlign = "MiddleCenter"
-$form.Controls.Add($icon)
-
-# --- PIN LABEL ---
+# --- PIN LABEL (IETS HOGER GEPLAATST NU DE O WEG IS) ---
 $pinText = New-Object System.Windows.Forms.Label
 $pinText.Text = "PIN"
 $pinText.Font = New-Object System.Drawing.Font("Segoe UI", 12)
 $pinText.ForeColor = [System.Drawing.Color]::FromArgb(100, 100, 100)
-$pinText.Location = New-Object System.Drawing.Point(0, 210)
+$pinText.Location = New-Object System.Drawing.Point(0, 180)
 $pinText.Size = New-Object System.Drawing.Size(650, 30)
 $pinText.TextAlign = "MiddleCenter"
 $form.Controls.Add($pinText)
@@ -61,7 +51,7 @@ $form.Controls.Add($pinText)
 # --- INPUT VELD ---
 $inputBox = New-Object System.Windows.Forms.TextBox
 $inputBox.Size = New-Object System.Drawing.Size(200, 30)
-$inputBox.Location = New-Object System.Drawing.Point(225, 245)
+$inputBox.Location = New-Object System.Drawing.Point(225, 215)
 $inputBox.BackColor = [System.Drawing.Color]::FromArgb(18, 18, 18)
 $inputBox.ForeColor = [System.Drawing.Color]::White
 $inputBox.Font = New-Object System.Drawing.Font("Segoe UI", 14)
@@ -70,16 +60,16 @@ $inputBox.TextAlign = "Center"
 $form.Controls.Add($inputBox)
 
 $line = New-Object System.Windows.Forms.Label
-$line.Location = New-Object System.Drawing.Point(225, 275)
+$line.Location = New-Object System.Drawing.Point(225, 245)
 $line.Size = New-Object System.Drawing.Size(200, 2)
 $line.BackColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $form.Controls.Add($line)
 
-# --- KNOP (TEKST GEWIJZIGD NAAR DOWNLOAD) ---
+# --- KNOP ---
 $btn = New-Object System.Windows.Forms.Button
 $btn.Text = "DOWNLOAD"
 $btn.Size = New-Object System.Drawing.Size(200, 40)
-$btn.Location = New-Object System.Drawing.Point(225, 300)
+$btn.Location = New-Object System.Drawing.Point(225, 280)
 $btn.FlatStyle = "Flat"
 $btn.BackColor = [System.Drawing.Color]::White
 $btn.ForeColor = [System.Drawing.Color]::Black
@@ -92,7 +82,7 @@ $status = New-Object System.Windows.Forms.Label
 $status.Text = "SYSTEM READY"
 $status.ForeColor = [System.Drawing.Color]::FromArgb(0, 180, 255)
 $status.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
-$status.Location = New-Object System.Drawing.Point(0, 360)
+$status.Location = New-Object System.Drawing.Point(0, 340)
 $status.Size = New-Object System.Drawing.Size(650, 20)
 $status.TextAlign = "MiddleCenter"
 $form.Controls.Add($status)
